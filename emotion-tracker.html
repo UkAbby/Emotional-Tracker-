@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gentle Emotion Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Caveat', 'Shadows Into Light', cursive;
+            background: linear-gradient(135deg, #f5f0f8 0%, #fef5f9 25%, #f8f5ff 50%, #fff5f8 75%, #f5f0ff 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(230, 220, 240, 0.1) 35px, rgba(230, 220, 240, 0.1) 70px),
+                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(245, 230, 245, 0.1) 35px, rgba(245, 230, 245, 0.1) 70px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 3px dashed rgba(212, 165, 216, 0.3);
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 2px solid rgba(230, 210, 235, 0.4);
+            border-radius: 22px;
+            pointer-events: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .nav-tab {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid #f5e6f7;
+            border-radius: 15px;
+            cursor: pointer;
+            color: #b8a4c9;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .nav-tab:hover {
+            background: #fef4f8;
+            border-color: #e8d4ea;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #f0c6f7 0%, #d4a5d8 100%);
+            border-color: #d4a5d8;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .cat-emotions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 18px;
+            margin-top: 15px;
+        }
+
+        .cat-option {
+            text-align: center;
+            padding: 25px 18px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #f5e6f7;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cat-option:hover {
+            transform: translateY(-5px);
+            border-color: #e8d4ea;
+            background: white;
+        }
+
+        .cat-option.selected {
+            border-color: #d4a5d8;
+            background: linear-gradient(135deg, #fef4f8 0%, #f0e7ff 100%);
+            transform: scale(1.05);
+        }
+
+        .cat-emoji {
+            font-size: 2em;
+            display: block;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            word-break: keep-all;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+
+        .cat-label {
+            color: #b8a4c9;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(212, 165, 216, 0.1);
+            border: 3px dashed rgba(212, 165, 216, 0.3);
+            position: relative;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 2px solid rgba(230, 210, 235, 0.4);
+            border-radius: 22px;
+            pointer-events: none;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+        }
+
+        .year-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .year-selector select {
+            padding: 10px 20px;
+            border: 2px solid #f5e6f7;
+            border-radius: 10px;
+            background: white;
+            color: #b8a4c9;
+            font-size: 1.1em;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #f5e6f7;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            color: #d4a5d8;
+            font-weight: 600;
+        }
+
+        .stat-label {
+            color: #b8a4c9;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        h1 {
+            color: #d4a5d8;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #b8a4c9;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        .check-in-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(212, 165, 216, 0.1);
+            border: 3px dashed rgba(212, 165, 216, 0.3);
+            position: relative;
+        }
+
+        .check-in-card::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 2px solid rgba(230, 210, 235, 0.4);
+            border-radius: 22px;
+            pointer-events: none;
+        }
+
+        .question-label {
+            color: #c9a8d4;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            display: block;
+            font-weight: 500;
+        }
+
+        .category-tag {
+            display: inline-block;
+            font-size: 0.75em;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .tag-simple {
+            background: #ffe4f0;
+            color: #d489a8;
+        }
+
+        .tag-reflective {
+            background: #f0e7ff;
+            color: #a584c9;
+        }
+
+        .tag-compassion {
+            background: #fff4e0;
+            color: #ddb882;
+        }
+
+        .tag-awareness {
+            background: #e0f4ff;
+            color: #82b8dd;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #f5e6f7;
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #6b5b7a;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #d4a5d8;
+            background: white;
+        }
+
+        .scale-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .scale-button {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #f5e6f7;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #b8a4c9;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .scale-button:hover {
+            background: #fef4f8;
+            border-color: #e8d4ea;
+            transform: translateY(-2px);
+        }
+
+        .scale-button.selected {
+            background: linear-gradient(135deg, #f0c6f7 0%, #d4a5d8 100%);
+            border-color: #d4a5d8;
+            color: white;
+        }
+
+        .save-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f0c6f7 0%, #d4a5d8 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(212, 165, 216, 0.3);
+        }
+
+        .save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 165, 216, 0.4);
+        }
+
+        .entries-section {
+            margin-top: 50px;
+        }
+
+        .entries-header {
+            color: #d4a5d8;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 300;
+        }
+
+        .entry-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f0c6f7;
+        }
+
+        .entry-date {
+            color: #b8a4c9;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .entry-item {
+            margin-bottom: 12px;
+        }
+
+        .entry-question {
+            color: #d4a5d8;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .entry-answer {
+            color: #6b5b7a;
+            padding-left: 10px;
+            line-height: 1.6;
+        }
+
+        .no-entries {
+            text-align: center;
+            color: #b8a4c9;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .delete-button {
+            background: #ffd4e5;
+            color: #d489a8;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .delete-button:hover {
+            background: #ffb8d4;
+        }
+
+        .success-message {
+            background: #e7f9f0;
+            color: #6bba8e;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .cat-emotions {
+                grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+            }
+            
+            .cat-option {
+                padding: 18px 12px;
+                min-height: 95px;
+            }
+            
+            .cat-emoji {
+                font-size: 1.6em;
+            }
+            
+            .cat-label {
+                font-size: 0.95em;
+            }
+            
+            .scale-container {
+                flex-wrap: wrap;
+            }
+            
+            .scale-button {
+                flex-basis: calc(20% - 8px);
+                padding: 10px 5px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ gentle check-in ✨</h1>
+            <p class="subtitle">a soft space for your feelings</p>
+        </header>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchTab('checkin')">📝 Daily Check-in</div>
+            <div class="nav-tab" onclick="switchTab('chart')">📊 Year Chart</div>
+            <div class="nav-tab" onclick="switchTab('journal')">🌸 My Journal</div>
+        </div>
+
+        <div id="checkin-tab" class="tab-content active">
+
+        <div class="check-in-card">
+            <span class="category-tag tag-simple">Simple Check-in</span>
+            <label class="question-label">How are you feeling today? Pick your cat mood! 🐱</label>
+            <div class="cat-emotions" id="catEmotions">
+                <div class="cat-option" onclick="selectCat('happy', '(=^･ω･^=)')">
+                    <span class="cat-emoji">(=^･ω･^=)</span>
+                    <span class="cat-label">Happy</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('love', '(=^･ェ･^=)♡')">
+                    <span class="cat-emoji">(=^･ェ･^=)♡</span>
+                    <span class="cat-label">Love</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('excited', '(=^◡^=)☆')">
+                    <span class="cat-emoji">(=^◡^=)☆</span>
+                    <span class="cat-label">Excited</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('sleepy', '(=-.ω.-)zzZ')">
+                    <span class="cat-emoji">(=-.ω.-)zzZ</span>
+                    <span class="cat-label">Sleepy</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('sad', '(=;ω;=)')">
+                    <span class="cat-emoji">(=;ω;=)</span>
+                    <span class="cat-label">Sad</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('angry', '(=`ω´=)')">
+                    <span class="cat-emoji">(=`ω´=)</span>
+                    <span class="cat-label">Angry</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('worried', '(=•́ω•̀=)?')">
+                    <span class="cat-emoji">(=•́ω•̀=)?</span>
+                    <span class="cat-label">Worried</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('confused', '(=@ω@=)?!')">
+                    <span class="cat-emoji">(=@ω@=)?!</span>
+                    <span class="cat-label">Confused</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('calm', '(=˘ω˘=)')">
+                    <span class="cat-emoji">(=˘ω˘=)</span>
+                    <span class="cat-label">Calm</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('proud', '(=^-ω-^=)b')">
+                    <span class="cat-emoji">(=^-ω-^=)b</span>
+                    <span class="cat-label">Proud</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('sick', '(=×ω×=)')">
+                    <span class="cat-emoji">(=×ω×=)</span>
+                    <span class="cat-label">Sick</span>
+                </div>
+                <div class="cat-option" onclick="selectCat('cool', '(=■ω■=)')">
+                    <span class="cat-emoji">(=■ω■=)</span>
+                    <span class="cat-label">Cool</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="check-in-card">
+            <span class="category-tag tag-simple">Simple Check-in</span>
+            <label class="question-label">On a scale of 1–10, how emotionally okay do I feel right now?</label>
+            <div class="scale-container" id="scale">
+                <button class="scale-button" onclick="selectScale(1)">1</button>
+                <button class="scale-button" onclick="selectScale(2)">2</button>
+                <button class="scale-button" onclick="selectScale(3)">3</button>
+                <button class="scale-button" onclick="selectScale(4)">4</button>
+                <button class="scale-button" onclick="selectScale(5)">5</button>
+                <button class="scale-button" onclick="selectScale(6)">6</button>
+                <button class="scale-button" onclick="selectScale(7)">7</button>
+                <button class="scale-button" onclick="selectScale(8)">8</button>
+                <button class="scale-button" onclick="selectScale(9)">9</button>
+                <button class="scale-button" onclick="selectScale(10)">10</button>
+            </div>
+        </div>
+
+        <div class="check-in-card">
+            <span class="category-tag tag-reflective">Reflective</span>
+            <label class="question-label">What affected my mood the most today?</label>
+            <textarea id="q3" placeholder="What moments stand out?"></textarea>
+        </div>
+
+        <div class="check-in-card">
+            <span class="category-tag tag-reflective">Reflective</span>
+            <label class="question-label">Did anything drain me—or give me energy?</label>
+            <textarea id="q4" placeholder="Notice what fills you up and what empties you out"></textarea>
+        </div>
+
+        <div class="check-in-card">
+            <span class="category-tag tag-compassion">Self-Compassion</span>
+            <label class="question-label">Was I kind to myself today?</label>
+            <textarea id="q5" placeholder="Remember: you're doing your best"></textarea>
+        </div>
+
+        <div class="check-in-card">
+            <span class="category-tag tag-compassion">Self-Compassion</span>
+            <label class="question-label">What would I tell a friend who felt like this?</label>
+            <textarea id="q6" placeholder="You deserve the same kindness you give others"></textarea>
+        </div>
+
+        <div class="check-in-card">
+            <span class="category-tag tag-awareness">Early Warning</span>
+            <label class="question-label">Is this feeling passing, or have I been carrying it for a while?</label>
+            <textarea id="q7" placeholder="Sometimes it helps to notice patterns"></textarea>
+        </div>
+
+        <button class="save-button" onclick="saveEntry()">💗 Save My Check-in</button>
+        
+        <div class="success-message" id="successMessage">
+            ✨ Your check-in has been saved with care ✨
+        </div>
+
+        </div>
+
+        <!-- Chart Tab -->
+        <div id="chart-tab" class="tab-content">
+            <div class="chart-container">
+                <div class="year-selector">
+                    <label for="yearSelect" style="color: #d4a5d8; font-size: 1.2em; margin-right: 10px;">Select Year:</label>
+                    <select id="yearSelect" onchange="updateChart()"></select>
+                </div>
+                <canvas id="emotionChart" class="chart-canvas"></canvas>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalEntries">0</div>
+                        <div class="stat-label">Total Check-ins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgMood">-</div>
+                        <div class="stat-label">Average Mood</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="topEmotion">-</div>
+                        <div class="stat-label">Most Common Emotion</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Journal Tab -->
+        <div id="journal-tab" class="tab-content">
+
+        <div class="entries-section">
+            <h2 class="entries-header">Your Journey 🌸</h2>
+            <div id="entriesList"></div>
+        </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let selectedScale = null;
+        let selectedCat = null;
+        let chart = null;
+
+        function selectCat(emotion, emoji) {
+            selectedCat = { emotion, emoji };
+            document.querySelectorAll('.cat-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.closest('.cat-option').classList.add('selected');
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // If switching to chart, update it
+            if (tabName === 'chart') {
+                populateYearSelector();
+                updateChart();
+            }
+
+            // If switching to journal, refresh entries
+            if (tabName === 'journal') {
+                displayEntries();
+            }
+        }
+
+        function selectScale(value) {
+            selectedScale = value;
+            document.querySelectorAll('.scale-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+
+        function saveEntry() {
+            const entry = {
+                date: new Date().toLocaleString(),
+                timestamp: Date.now(),
+                catEmotion: selectedCat,
+                q2: selectedScale,
+                q3: document.getElementById('q3').value,
+                q4: document.getElementById('q4').value,
+                q5: document.getElementById('q5').value,
+                q6: document.getElementById('q6').value,
+                q7: document.getElementById('q7').value
+            };
+
+            // Get existing entries
+            let entries = JSON.parse(localStorage.getItem('emotionEntries') || '[]');
+            entries.unshift(entry);
+            localStorage.setItem('emotionEntries', JSON.stringify(entries));
+
+            // Show success message
+            const successMsg = document.getElementById('successMessage');
+            successMsg.classList.add('show');
+            setTimeout(() => successMsg.classList.remove('show'), 3000);
+
+            // Clear form
+            selectedCat = null;
+            document.querySelectorAll('.cat-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById('q3').value = '';
+            document.getElementById('q4').value = '';
+            document.getElementById('q5').value = '';
+            document.getElementById('q6').value = '';
+            document.getElementById('q7').value = '';
+            selectedScale = null;
+            document.querySelectorAll('.scale-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function displayEntries() {
+            const entries = JSON.parse(localStorage.getItem('emotionEntries') || '[]');
+            const entriesList = document.getElementById('entriesList');
+
+            if (entries.length === 0) {
+                entriesList.innerHTML = '<div class="no-entries">Your check-ins will appear here 🌱</div>';
+                return;
+            }
+
+            const questions = [
+                "How are you feeling today?",
+                "On a scale of 1–10, how emotionally okay do I feel right now?",
+                "What affected my mood the most today?",
+                "Did anything drain me—or give me energy?",
+                "Was I kind to myself today?",
+                "What would I tell a friend who felt like this?",
+                "Is this feeling passing, or have I been carrying it for a while?"
+            ];
+
+            entriesList.innerHTML = entries.map((entry, index) => `
+                <div class="entry-card">
+                    <div class="entry-date">📅 ${entry.date}</div>
+                    ${entry.catEmotion ? `<div class="entry-item">
+                        <div class="entry-question">${questions[0]}</div>
+                        <div class="entry-answer">${entry.catEmotion.emoji} ${entry.catEmotion.emotion}</div>
+                    </div>` : ''}
+                    ${entry.q2 ? `<div class="entry-item">
+                        <div class="entry-question">${questions[1]}</div>
+                        <div class="entry-answer">${entry.q2}/10</div>
+                    </div>` : ''}
+                    ${entry.q3 ? `<div class="entry-item">
+                        <div class="entry-question">${questions[2]}</div>
+                        <div class="entry-answer">${entry.q3}</div>
+                    </div>` : ''}
+                    ${entry.q4 ? `<div class="entry-item">
+                        <div class="entry-question">${questions[3]}</div>
+                        <div class="entry-answer">${entry.q4}</div>
+                    </div>` : ''}
+                    ${entry.q5 ? `<div class="entry-item">
+                        <div class="entry-question">${questions[4]}</div>
+                        <div class="entry-answer">${entry.q5}</div>
+                    </div>` : ''}
+                    ${entry.q6 ? `<div class="entry-item">
+                        <div class="entry-question">${questions[5]}</div>
+                        <div class="entry-answer">${entry.q6}</div>
+                    </div>` : ''}
+                    ${entry.q7 ? `<div class="entry-item">
+                        <div class="entry-question">${questions[6]}</div>
+                        <div class="entry-answer">${entry.q7}</div>
+                    </div>` : ''}
+                    <button class="delete-button" onclick="deleteEntry(${index})">Delete Entry</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteEntry(index) {
+            if (confirm('Are you sure you want to delete this check-in?')) {
+                let entries = JSON.parse(localStorage.getItem('emotionEntries') || '[]');
+                entries.splice(index, 1);
+                localStorage.setItem('emotionEntries', JSON.stringify(entries));
+                displayEntries();
+            }
+        }
+
+        function populateYearSelector() {
+            const entries = JSON.parse(localStorage.getItem('emotionEntries') || '[]');
+            const years = new Set();
+            
+            entries.forEach(entry => {
+                const year = new Date(entry.timestamp).getFullYear();
+                years.add(year);
+            });
+
+            const currentYear = new Date().getFullYear();
+            years.add(currentYear);
+
+            const yearSelect = document.getElementById('yearSelect');
+            yearSelect.innerHTML = Array.from(years).sort((a, b) => b - a).map(year => 
+                `<option value="${year}">${year}</option>`
+            ).join('');
+        }
+
+        function updateChart() {
+            const entries = JSON.parse(localStorage.getItem('emotionEntries') || '[]');
+            const selectedYear = parseInt(document.getElementById('yearSelect').value);
+            
+            // Filter entries for selected year
+            const yearEntries = entries.filter(entry => {
+                const entryYear = new Date(entry.timestamp).getFullYear();
+                return entryYear === selectedYear;
+            });
+
+            // Prepare data for chart - monthly averages
+            const monthlyData = new Array(12).fill(0);
+            const monthlyCounts = new Array(12).fill(0);
+
+            yearEntries.forEach(entry => {
+                const month = new Date(entry.timestamp).getMonth();
+                if (entry.q2) {
+                    monthlyData[month] += entry.q2;
+                    monthlyCounts[month]++;
+                }
+            });
+
+            const monthlyAverages = monthlyData.map((sum, i) => 
+                monthlyCounts[i] > 0 ? (sum / monthlyCounts[i]).toFixed(1) : 0
+            );
+
+            // Update stats
+            document.getElementById('totalEntries').textContent = yearEntries.length;
+            
+            const moodScores = yearEntries.filter(e => e.q2).map(e => e.q2);
+            const avgMood = moodScores.length > 0 
+                ? (moodScores.reduce((a, b) => a + b, 0) / moodScores.length).toFixed(1)
+                : '-';
+            document.getElementById('avgMood').textContent = avgMood;
+
+            // Calculate most common emotion
+            const emotionCounts = {};
+            yearEntries.forEach(entry => {
+                if (entry.catEmotion) {
+                    emotionCounts[entry.catEmotion.emotion] = 
+                        (emotionCounts[entry.catEmotion.emotion] || 0) + 1;
+                }
+            });
+            
+            const topEmotion = Object.keys(emotionCounts).length > 0
+                ? Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0][0]
+                : '-';
+            document.getElementById('topEmotion').textContent = topEmotion;
+
+            // Create or update chart
+            const ctx = document.getElementById('emotionChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Average Mood (1-10)',
+                        data: monthlyAverages,
+                        borderColor: '#d4a5d8',
+                        backgroundColor: 'rgba(212, 165, 216, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#f0c6f7',
+                        pointBorderColor: '#d4a5d8',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#b8a4c9',
+                                font: {
+                                    family: "'Caveat', cursive",
+                                    size: 16
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                color: '#b8a4c9',
+                                font: {
+                                    family: "'Caveat', cursive",
+                                    size: 14
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(245, 230, 247, 0.5)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#b8a4c9',
+                                font: {
+                                    family: "'Caveat', cursive",
+                                    size: 14
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(245, 230, 247, 0.5)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load entries on page load
+        displayEntries();
+    </script>
+</body>
+</html>
